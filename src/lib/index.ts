@@ -136,8 +136,9 @@ export class APKMirrorDownloader {
         );
       }
 
-      // filter by type
-      variants = variants.filter(v => v.type === o.type);
+      // Note: We don't filter by type here because APKMirror variant pages
+      // often provide both APK and Bundle download options on the same page.
+      // The type selection happens on the download page itself.
 
       selectedVariant = variants[0];
     }
@@ -146,7 +147,10 @@ export class APKMirrorDownloader {
       throw new Error("Could not find any suitable variant");
     }
 
-    const finalDownloadUrl = await getFinalDownloadUrl(selectedVariant.url);
+    const finalDownloadUrl = await getFinalDownloadUrl(
+      selectedVariant.url,
+      o.type,
+    );
 
     const outDir = o.outDir ?? ".";
 

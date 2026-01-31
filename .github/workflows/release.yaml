@@ -90,14 +90,14 @@ jobs:
 
             ### x64 (Intel/AMD)
             ```bash
-            wget https://github.com/tanishqmanuja/apkmirror-downloader/releases/download/v${{ steps.package_version.outputs.version }}/apkmd-linux-x64
+            wget https://github.com/${{ github.repository }}/releases/download/v${{ steps.package_version.outputs.version }}/apkmd-linux-x64
             chmod +x apkmd-linux-x64
             ./apkmd-linux-x64 --help
             ```
 
             ### ARM64 (Apple Silicon, Raspberry Pi, etc.)
             ```bash
-            wget https://github.com/tanishqmanuja/apkmirror-downloader/releases/download/v${{ steps.package_version.outputs.version }}/apkmd-linux-arm64
+            wget https://github.com/${{ github.repository }}/releases/download/v${{ steps.package_version.outputs.version }}/apkmd-linux-arm64
             chmod +x apkmd-linux-arm64
             ./apkmd-linux-arm64 --help
             ```
