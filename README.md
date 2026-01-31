@@ -2,6 +2,24 @@
 
 APKMD is a CLI tool that allows you to download APKs from Apkmirror. This repo also provides a npm package [apkmirror-downloader](https://www.npmjs.com/package/apkmirror-downloader) that allows you to download APKs from APKMirror programatically.
 
+## Requirements
+
+This tool requires **FlareSolverr** to bypass Cloudflare protection. FlareSolverr must be running before using this tool.
+
+### Quick Start with Docker
+
+```bash
+# Start FlareSolverr
+docker run -d --name flaresolverr -p 8191:8191 --restart unless-stopped flaresolverr/flaresolverr:latest
+
+# Or use docker-compose
+docker-compose up -d
+```
+
+### Environment Variables
+
+- `FLARESOLVERR_URL`: FlareSolverr endpoint (default: `http://localhost:8191/v1`)
+
 ## 🚀 Install
 
 Using `npm`

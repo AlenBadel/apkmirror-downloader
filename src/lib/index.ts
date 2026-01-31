@@ -3,14 +3,13 @@ import { existsSync } from "fs";
 import { match } from "ts-pattern";
 
 import { cleanObject } from "../utils/object";
-import { ensureExtension } from "../utils/path";
 import type { LooseAutocomplete } from "../utils/types";
+import { closeBrowser, downloadFile } from "./http";
 import { getFinalDownloadUrl } from "./scrapers/downloads";
 import { getVariants, RedirectError } from "./scrapers/variants";
 import { getVersions } from "./scrapers/versions";
 import type { App, AppArch, AppOptions, SpecialAppVersionToken } from "./types";
 import {
-  extractFileNameFromUrl,
   isAlphaVersion,
   isBetaVersion,
   isSpecialAppVersionToken,
@@ -149,20 +148,36 @@ export class APKMirrorDownloader {
 
     const finalDownloadUrl = await getFinalDownloadUrl(selectedVariant.url);
 
-    return fetch(finalDownloadUrl).then(async res => {
-      const filename = extractFileNameFromUrl(res.url);
-      const extension = filename.split(".").pop()!;
+    const outDir = o.outDir ?? ".";
+    
+    // Generate clean filename: app-version-arch.extension
+    // Extract version from the selected variant or URL
+    const versionMatch = selectedVariant.url.match(/-(\d+[\d.]+\d+)-/);
+    const version = versionMatch ? versionMatch[1] : (selectedVariant as any).version || "unknown";
+    const arch = o.arch !== "universal" && o.arch !== "noarch" ? `-${o.arch}` : "";
+    const extension = o.type === "bundle" ? "apkm" : "apk";
+    const cleanFilename = o.outFile ?? `${app.repo}${version ? `-${version}` : ""}${arch}.${extension}`;
+    
+    const tempDest = `${outDir}/downloading.${extension}`;
+    const dest = `${outDir}/${cleanFilename}`;
 
-      const outDir = o.outDir ?? ".";
-      const outFile = ensureExtension(o.outFile ?? filename, extension);
-      const dest = `${outDir}/${outFile}`;
+    if (!o.overwrite && existsSync(dest)) {
+      await closeBrowser();
+      return { dest, skipped: true as const };
+    }
 
-      if (!o.overwrite && existsSync(dest)) {
-        return { dest, skipped: true as const };
+    await downloadFile(finalDownloadUrl, tempDest);
+    
+    // Rename from temp to final name
+    if (tempDest !== dest) {
+      const { renameSync, unlinkSync } = await import("fs");
+      if (existsSync(dest)) {
+        unlinkSync(dest);
       }
+      renameSync(tempDest, dest);
+    }
 
-      await Bun.write(dest, res);
-      return { dest, skipped: false as const };
-    });
+    await closeBrowser();
+    return { dest, skipped: false as const };
   }
 }

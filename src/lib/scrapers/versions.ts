@@ -1,12 +1,11 @@
 import { load } from "cheerio";
 
 import { isNotNull } from "../../utils/typescript";
+import { apkMirrorFetchText } from "../http";
 import { withBaseUrl } from "../utils";
 
 export function getVersions(repoPageUrl: string) {
-  return fetch(repoPageUrl)
-    .then(res => res.text())
-    .then(extractVersions);
+  return apkMirrorFetchText(repoPageUrl).then(extractVersions);
 }
 
 export function extractVersions(versionsPageHtml: string) {
@@ -19,7 +18,7 @@ export function extractVersions(versionsPageHtml: string) {
   }
 
   const table = $('.listWidget:has(a[name="all_versions"])').first();
-  if (!table) {
+  if (!table.length) {
     throw new Error("Could not find versions table");
   }
 

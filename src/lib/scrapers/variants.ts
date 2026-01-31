@@ -2,13 +2,14 @@ import { load } from "cheerio";
 import { match } from "ts-pattern";
 
 import { isNotNull } from "../../utils/typescript";
+import { apkMirrorFetch } from "../http";
 import { SUPPORTED_APP_TYPES } from "../types";
 import { withBaseUrl } from "../utils";
 
 export class RedirectError extends Error {}
 
 export function getVariants(variantsPageUrl: string) {
-  return fetch(variantsPageUrl)
+  return apkMirrorFetch(variantsPageUrl)
     .then(res => {
       if (res.redirected) {
         throw new RedirectError(res.url);
@@ -16,7 +17,9 @@ export function getVariants(variantsPageUrl: string) {
 
       return res.text();
     })
-    .then(extractVariants);
+    .then(html => {
+      return extractVariants(html);
+    });
 }
 
 export function extractVariants(variantsPageHtml: string) {
@@ -29,7 +32,7 @@ export function extractVariants(variantsPageHtml: string) {
   }
 
   const table = $(".variants-table").first();
-  if (!table) {
+  if (!table.length) {
     throw new Error("Could not find variants table");
   }
 

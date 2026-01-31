@@ -1,15 +1,14 @@
 import { load } from "cheerio";
 
+import { apkMirrorFetchText } from "../http";
 import { withBaseUrl } from "../utils";
 
 export function getFinalDownloadUrl(downloadPageUrl: string) {
-  return fetch(downloadPageUrl)
-    .then(res => res.text())
-    .then(extractRedirectDownloadUrl)
+  return apkMirrorFetchText(downloadPageUrl)
+    .then(html => extractRedirectDownloadUrl(html))
     .then(withBaseUrl)
-    .then(url => fetch(url))
-    .then(res => res.text())
-    .then(extractFinalDownloadUrl)
+    .then(url => apkMirrorFetchText(url))
+    .then(html => extractFinalDownloadUrl(html))
     .then(withBaseUrl);
 }
 

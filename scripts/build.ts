@@ -1,4 +1,4 @@
-import dts from "bun-plugin-dts";
+import { readFileSync, writeFileSync, chmodSync } from "fs";
 
 console.log("🏗️  Building Lib");
 await Bun.build({
@@ -9,13 +9,6 @@ await Bun.build({
   // @ts-ignore
   packages: "external",
   minify: true,
-  plugins: [
-    dts({
-      output: {
-        exportReferencedTypes: false,
-      },
-    }),
-  ],
 });
 
 console.log("🏗️  Building CLI");
@@ -26,3 +19,14 @@ await Bun.build({
   sourcemap: "none",
   minify: true,
 });
+
+// Add shebang to CLI and make it executable
+console.log("Adding shebang to CLI");
+const cliPath = "dist/cli.js";
+const cliContent = readFileSync(cliPath, "utf-8");
+if (!cliContent.startsWith("#!/")) {
+  writeFileSync(cliPath, `#!/usr/bin/env node\n${cliContent}`);
+}
+chmodSync(cliPath, 0o755);
+
+console.log("Build complete!");
