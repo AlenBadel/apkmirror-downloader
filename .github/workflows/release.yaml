@@ -38,10 +38,12 @@ jobs:
       - name: Build library
         run: bun run build
 
-      - name: Compile Linux CLI binary
+      - name: Compile Linux CLI binaries
         run: |
           echo "Compiling CLI for bun-linux-x64"
           bun build --compile --target=bun-linux-x64 ./src/cli.ts --outfile ./out/apkmd-linux-x64
+          echo "Compiling CLI for bun-linux-arm64"
+          bun build --compile --target=bun-linux-arm64 ./src/cli.ts --outfile ./out/apkmd-linux-arm64
 
       - name: Get version from package.json
         id: package_version
@@ -76,14 +78,27 @@ jobs:
 
             ## Installation
 
-            Download the `apkmd-linux-x64` binary, make it executable, and run:
-
+            ### x64 (Intel/AMD)
             ```bash
+            wget https://github.com/tanishqmanuja/apkmirror-downloader/releases/download/v${{ steps.package_version.outputs.version }}/apkmd-linux-x64
             chmod +x apkmd-linux-x64
             ./apkmd-linux-x64 --help
             ```
+
+            ### ARM64 (Apple Silicon, Raspberry Pi, etc.)
+            ```bash
+            wget https://github.com/tanishqmanuja/apkmirror-downloader/releases/download/v${{ steps.package_version.outputs.version }}/apkmd-linux-arm64
+            chmod +x apkmd-linux-arm64
+            ./apkmd-linux-arm64 --help
+            ```
+
+            **Note:** FlareSolverr is required for Cloudflare bypass. Run with Docker:
+            ```bash
+            docker run -d --name flaresolverr -p 8191:8191 flaresolverr/flaresolverr:latest
+            ```
           files: |
             out/apkmd-linux-x64
+            out/apkmd-linux-arm64
           draft: false
           prerelease: false
         env:
