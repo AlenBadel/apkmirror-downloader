@@ -149,15 +149,20 @@ export class APKMirrorDownloader {
     const finalDownloadUrl = await getFinalDownloadUrl(selectedVariant.url);
 
     const outDir = o.outDir ?? ".";
-    
+
     // Generate clean filename: app-version-arch.extension
     // Extract version from the selected variant or URL
     const versionMatch = selectedVariant.url.match(/-(\d+[\d.]+\d+)-/);
-    const version = versionMatch ? versionMatch[1] : (selectedVariant as any).version || "unknown";
-    const arch = o.arch !== "universal" && o.arch !== "noarch" ? `-${o.arch}` : "";
+    const version = versionMatch
+      ? versionMatch[1]
+      : (selectedVariant as any).version || "unknown";
+    const arch =
+      o.arch !== "universal" && o.arch !== "noarch" ? `-${o.arch}` : "";
     const extension = o.type === "bundle" ? "apkm" : "apk";
-    const cleanFilename = o.outFile ?? `${app.repo}${version ? `-${version}` : ""}${arch}.${extension}`;
-    
+    const cleanFilename =
+      o.outFile ??
+      `${app.repo}${version ? `-${version}` : ""}${arch}.${extension}`;
+
     const tempDest = `${outDir}/downloading.${extension}`;
     const dest = `${outDir}/${cleanFilename}`;
 
@@ -167,7 +172,7 @@ export class APKMirrorDownloader {
     }
 
     await downloadFile(finalDownloadUrl, tempDest);
-    
+
     // Rename from temp to final name
     if (tempDest !== dest) {
       const { renameSync, unlinkSync } = await import("fs");

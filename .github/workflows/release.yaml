@@ -19,7 +19,7 @@ jobs:
       contents: write
 
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
 
     steps:
       - name: Checkout source
@@ -35,15 +35,25 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Lint and format check
+        run: bun run lint
+
       - name: Build library
         run: bun run build
 
       - name: Compile Linux CLI binaries
+        timeout-minutes: 20
         run: |
-          echo "Compiling CLI for bun-linux-x64"
+          mkdir -p out
+          echo "Compiling CLI for bun-linux-x64..."
           bun build --compile --target=bun-linux-x64 ./src/cli.ts --outfile ./out/apkmd-linux-x64
-          echo "Compiling CLI for bun-linux-arm64"
+          echo "✓ x64 compilation complete"
+          ls -lh ./out/apkmd-linux-x64
+
+          echo "Compiling CLI for bun-linux-arm64..."
           bun build --compile --target=bun-linux-arm64 ./src/cli.ts --outfile ./out/apkmd-linux-arm64
+          echo "✓ ARM64 compilation complete"
+          ls -lh ./out/apkmd-linux-arm64
 
       - name: Get version from package.json
         id: package_version

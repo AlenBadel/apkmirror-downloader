@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, chmodSync } from "fs";
+import { chmodSync, readFileSync, writeFileSync } from "fs";
 
 console.log("🏗️  Building Lib");
 await Bun.build({

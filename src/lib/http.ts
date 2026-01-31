@@ -1,7 +1,8 @@
 // FlareSolverr-based HTTP client for bypassing Cloudflare protection
 // FlareSolverr must be running at http://localhost:8191
 
-const FLARESOLVERR_URL = process.env.FLARESOLVERR_URL || "http://localhost:8191/v1";
+const FLARESOLVERR_URL =
+  process.env.FLARESOLVERR_URL || "http://localhost:8191/v1";
 const MAX_TIMEOUT = 60000;
 
 interface FlareSolverrResponse {
@@ -42,7 +43,7 @@ async function createSession(): Promise<string> {
     }),
   });
 
-  const data = await response.json() as { session: string };
+  const data = (await response.json()) as { session: string };
   return data.session;
 }
 
@@ -53,7 +54,9 @@ async function getPageContent(url: string): Promise<string> {
       sessionId = await createSession();
     } catch {
       // If session creation fails, continue without it
-      console.log("Could not create FlareSolverr session, continuing without it");
+      console.log(
+        "Could not create FlareSolverr session, continuing without it",
+      );
     }
   }
 
@@ -75,10 +78,12 @@ async function getPageContent(url: string): Promise<string> {
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`FlareSolverr request failed: ${response.status} - ${errorText}`);
+    throw new Error(
+      `FlareSolverr request failed: ${response.status} - ${errorText}`,
+    );
   }
 
-  const data = await response.json() as FlareSolverrResponse;
+  const data = (await response.json()) as FlareSolverrResponse;
 
   if (data.status !== "ok") {
     throw new Error(`FlareSolverr failed: ${data.message}`);
@@ -105,18 +110,20 @@ export async function apkMirrorFetchText(url: string): Promise<string> {
 // For downloading the actual APK file, we use the stored cookies
 export async function downloadFile(
   url: string,
-  dest: string
+  dest: string,
 ): Promise<{ finalUrl: string; size: number }> {
   // Convert cookies to cookie string
   const cookieString = storedCookies
-    .map((c) => `${c.name}=${c.value}`)
+    .map(c => `${c.name}=${c.value}`)
     .join("; ");
 
   // Fetch the file directly using the cookies we have
   const response = await fetch(url, {
     headers: {
       Cookie: cookieString,
-      "User-Agent": storedUserAgent || "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+      "User-Agent":
+        storedUserAgent ||
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
       Accept: "*/*",
       "Accept-Language": "en-US,en;q=0.9",
       Referer: "https://www.apkmirror.com/",
@@ -130,7 +137,7 @@ export async function downloadFile(
 
   // Get the response as ArrayBuffer and write to file
   const arrayBuffer = await response.arrayBuffer();
-  
+
   // Cross-runtime file writing (works with both Bun and Node.js)
   const { writeFile } = await import("fs/promises");
   await writeFile(dest, Buffer.from(arrayBuffer));
@@ -173,4 +180,3 @@ process.on("SIGTERM", async () => {
   await closeBrowser();
   process.exit(0);
 });
-
