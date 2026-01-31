@@ -8,6 +8,7 @@ on:
       - "**.md"
       - ".github/**.md"
       - LICENSE
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
