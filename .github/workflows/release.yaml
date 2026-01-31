@@ -1,24 +1,20 @@
-name: Release
+name: Auto Release on PR Merge
 
 on:
-  workflow_dispatch:
-    inputs:
-      bump:
-        description: "Bump Type"
-        required: true
-        type: choice
-        default: patch
-        options:
-          - patch
-          - minor
-          - major
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "**.md"
+      - ".github/**.md"
+      - LICENSE
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  release:
+  build-and-release:
     permissions:
       contents: write
 
@@ -26,25 +22,75 @@ jobs:
     timeout-minutes: 15
 
     steps:
-      - name: Checkout Source Code
+      - name: Checkout source
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Setup Git User
-        run: |
-          git config user.name "${GITHUB_ACTOR}"
-          git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
 
-      - name: Install Dependencies
+      - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Build and Release
-        run: bun run release ${{ github.event.inputs.bump }}
+      - name: Build library
+        run: bun run build
+
+      - name: Compile Linux CLI binary
+        run: |
+          echo "Compiling CLI for bun-linux-x64"
+          bun build --compile --target=bun-linux-x64 ./src/cli.ts --outfile ./out/apkmd-linux-x64
+
+      - name: Get version from package.json
+        id: package_version
+        run: |
+          VERSION=$(grep '"version"' package.json | head -n1 | sed -E 's/.*"version": "([^"]+)".*/\1/')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+
+      - name: Check if release exists
+        id: check_release
+        run: |
+          if gh release view "v${{ steps.package_version.outputs.version }}" >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "Release v${{ steps.package_version.outputs.version }} already exists"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "Release v${{ steps.package_version.outputs.version }} does not exist"
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Create release
+        if: steps.check_release.outputs.exists == 'false'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.package_version.outputs.version }}
+          name: Stealth APK Downloader v${{ steps.package_version.outputs.version }}
+          body: |
+            ## Changes
+
+            See commits since last release for details.
+
+            ## Installation
+
+            Download the `apkmd-linux-x64` binary, make it executable, and run:
+
+            ```bash
+            chmod +x apkmd-linux-x64
+            ./apkmd-linux-x64 --help
+            ```
+          files: |
+            out/apkmd-linux-x64
+          draft: false
+          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Release already exists
+        if: steps.check_release.outputs.exists == 'true'
+        run: |
+          echo "Release v${{ steps.package_version.outputs.version }} already exists. Skipping creation."
+          echo "Tip: Bump the version in package.json to create a new release."
